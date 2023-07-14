@@ -13,10 +13,10 @@ extern void vec_grow(void* _refList);
 
 extern void vec_bubble_sort(void* _refList, bool (*_compareFunc)(void*, void*));
 extern void vec_selection_sort(void* _refList, bool (*_compareFunc)(void*, void*));
-extern void MergeSort(void* _refList, bool (*_compareFunc)(void*, void*));
+extern void vec_merge_sort(void* _refList, bool (*_compareFunc)(void*, void*));
 
-extern void _MergeSort(void* _refList, int _begin, int _end, bool (*_compareFunc)(void*, void*));
-extern void _Merge(void* _refList, int _begin, int _mid, int _right, bool (*_compareFunc)(void*, void*));
+extern void _vec_merge_sort(void* _refList, int _begin, int _end, bool (*_compareFunc)(void*, void*));
+extern void _vec_merge(void* _refList, int _begin, int _mid, int _right, bool (*_compareFunc)(void*, void*));
 
 // compare functions
 extern bool DoubleAscending(void* a, void *b);

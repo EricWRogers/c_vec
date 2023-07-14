@@ -3,11 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// unsigned int capacity
-// unsigned int count
-// size_t elementSize
-// beginning of array
-
 typedef struct {
     unsigned int capacity;
     unsigned int count;
@@ -25,14 +20,14 @@ void vec_init(void* _refList, unsigned int _capacity, size_t _elementSize) {
 }
 
 void vec_free(void* _refList) {
-    vec_info* info = ((vec_info*)(*((void**)_refList))) - 1;
+    vec_info* info = *(vec_info**)_refList - 1;
 
     free(info);
     *((void**)_refList) = NULL;
 }
 
 void vec_clear(void* _refList) {
-    vec_info* info = ((vec_info*)(*((void**)_refList))) - 1;
+    vec_info* info = *(vec_info**)_refList - 1;
 
     info->count = 0;
 }
@@ -58,7 +53,7 @@ void vec_add(void* _refList, const void* _value) {
     }
 
     memcpy(
-        ((char*)(*(void**)_refList) + (info->count * info->elementSize)),
+        (*(char**)_refList + (info->count * info->elementSize)),
         _value,
         info->elementSize
     );
@@ -67,55 +62,32 @@ void vec_add(void* _refList, const void* _value) {
 }
 
 unsigned int vec_count(void* _refList) {
-    vec_info* info = ((vec_info*)(*((void**)_refList))) - 1;
+    vec_info* info = *(vec_info**)_refList - 1;
 
     return info->count;
 }
 
 int vec_find(void* _refList, void* _value) {
-    vec_info* info = ((vec_info*)(*((void**)_refList))) - 1;
+    vec_info* info = *(vec_info**)_refList - 1;
 
     for (int i = 0; i < info->count; i++)
-        if (memcmp((*((char**)_refList)) + (i * info->elementSize), _value, info->elementSize) == 0)
+        if (memcmp(*(char**)_refList + (i * info->elementSize), _value, info->elementSize) == 0)
             return i;
 
     return -1;
 }
 
 void* vec_end(void* _refList) {
-    vec_info* info = ((vec_info*)(*((void**)_refList))) - 1;
+    vec_info* info = *(vec_info**)_refList - 1;
 
-    return (*((char**)_refList)) + (info->count * info->elementSize);
-}
-
-void vec_grow(void* _refList) {
-    size_t* elementSize = ((size_t*)(*((void**)_refList))) - 1;
-    unsigned int* count = ((unsigned int*)elementSize) - 1;
-    unsigned int* capacity = count - 1;
-
-    *capacity = *capacity * 2;
-
-    void* data = capacity;
-
-    data = realloc(
-        (void*)capacity,
-        sizeof(unsigned int)
-        + sizeof(unsigned int)
-        + sizeof(size_t)
-        + (*capacity * *elementSize)
-    );
-
-    capacity = (unsigned int*)data;
-    count = capacity + 1;
-    elementSize = (size_t*)(count + 1);
-    *((void**)_refList) = elementSize + 1;
+    return *(char**)_refList + (info->count * info->elementSize);
 }
 
 void vec_bubble_sort(void* _refList, bool (*_compareFunc)(void*, void*)) {
-    vec_info* info = ((vec_info*)(*((void**)_refList))) - 1;
+    vec_info* info = *(vec_info**)_refList - 1;
 
     void* begin = *((void**)_refList);
-    void* end = (*((char**)_refList)) + (info->count * info->elementSize);
+    void* end = *(char**)_refList + (info->count * info->elementSize);
     bool swapped = true;
     char* temp = malloc(info->elementSize * sizeof(char));
     void* current = NULL;
@@ -143,10 +115,10 @@ void vec_bubble_sort(void* _refList, bool (*_compareFunc)(void*, void*)) {
 }
 
 void vec_selection_sort(void* _refList, bool (*_compareFunc)(void*, void*)) {
-    vec_info* info = ((vec_info*)(*((void**)_refList))) - 1;
+    vec_info* info = (vec_info*)(*((void**)_refList)) - 1;
 
     char* temp = malloc(info->elementSize * sizeof(char));
-    char* charList = (char*)(*(void**)_refList);
+    char* charList = *(char**)_refList;
     void* current = NULL;
     void* next = NULL;
 
@@ -173,51 +145,45 @@ void vec_selection_sort(void* _refList, bool (*_compareFunc)(void*, void*)) {
     free(temp);
 }
 
-void MergeSort(void* _refList, bool (*_compareFunc)(void*, void*)) {
-    size_t* elementSize = ((size_t*)(*((void**)_refList))) - 1;
-    unsigned int* count = ((unsigned int*)elementSize) - 1;
-    unsigned int* capacity = count - 1;
+void vec_merge_sort(void* _refList, bool (*_compareFunc)(void*, void*)) {
+    vec_info* info = *(vec_info**)_refList - 1;
 
-    if (*count < 2)
+    if (info->count < 2)
         return;
 
     unsigned int begin = 0;
-    unsigned int end = *count - 1;
+    unsigned int end = info->count - 1;
     unsigned int mid = begin + (end - begin) / 2;
 
-    _MergeSort(_refList, begin, mid, _compareFunc);
-    _MergeSort(_refList, mid + 1, end, _compareFunc);
-    _Merge(_refList, begin, mid, end, _compareFunc);
+    _vec_merge_sort(_refList, begin, mid, _compareFunc);
+    _vec_merge_sort(_refList, mid + 1, end, _compareFunc);
+    _vec_merge(_refList, begin, mid, end, _compareFunc);
 }
 
-void _MergeSort(void* _refList, int _begin, int _end, bool (*_compareFunc)(void*, void*)) {
-    size_t* elementSize = ((size_t*)(*((void**)_refList))) - 1;
-    unsigned int* count = ((unsigned int*)elementSize) - 1;
-    unsigned int* capacity = count - 1;
-
+void _vec_merge_sort(void* _refList, int _begin, int _end, bool (*_compareFunc)(void*, void*)) {
     if (_begin >= _end)
         return;
 
-    unsigned int mid = _begin + (_end - _begin) / 2;
+    unsigned int mid = _begin + (_end - _begin) * 0.5;
 
-    _MergeSort(_refList, _begin, mid, _compareFunc);
-    _MergeSort(_refList, mid + 1, _end, _compareFunc);
-    _Merge(_refList, _begin, mid, _end, _compareFunc);
+    _vec_merge_sort(_refList, _begin, mid, _compareFunc);
+    _vec_merge_sort(_refList, mid + 1, _end, _compareFunc);
+    _vec_merge(_refList, _begin, mid, _end, _compareFunc);
 }
 
-void _Merge(void* _refList, int _left, int _mid, int _right, bool (*_compareFunc)(void*, void*)) {
-    size_t* elementSize = ((size_t*)(*((void**)_refList))) - 1;
+void _vec_merge(void* _refList, int _left, int _mid, int _right, bool (*_compareFunc)(void*, void*)) {
+    vec_info* info = *(vec_info**)_refList - 1;
 
     int const subArrayOneSize = _mid - _left + 1;
     int const subArrayTwoSize = _right - _mid;
 
     // Create temp arrays
-    char* leftArray = malloc((*elementSize * subArrayOneSize) * sizeof(char));
-    char* rightArray = malloc((*elementSize * subArrayTwoSize) * sizeof(char));
+    char* leftArray = malloc(info->elementSize * subArrayOneSize);
+    char* rightArray = malloc(info->elementSize * subArrayTwoSize);
 
     // Copy data to temp arrays leftArray[] and rightArray[]
-    memcpy( leftArray, ((char*)(*(void**)_refList) + (_left * (*elementSize))), (subArrayOneSize) * (*elementSize));
-    memcpy( rightArray, ((char*)(*(void**)_refList) + ((_mid+1) * (*elementSize))), (subArrayTwoSize) * (*elementSize));
+    memcpy( leftArray, *(char**)_refList + (_left * info->elementSize), subArrayOneSize * info->elementSize);
+    memcpy( rightArray, *(char**)_refList + ((_mid+1) * info->elementSize), subArrayTwoSize * info->elementSize);
 
     int indexOfSubArrayOne = 0;
     int indexOfSubArrayTwo = 0;
@@ -225,19 +191,19 @@ void _Merge(void* _refList, int _left, int _mid, int _right, bool (*_compareFunc
 
     // Merge the temp arrays back into array[left..right]
     while (indexOfSubArrayOne < subArrayOneSize && indexOfSubArrayTwo < subArrayTwoSize) {
-        if (!_compareFunc(leftArray + (indexOfSubArrayOne * (*elementSize)), rightArray + (indexOfSubArrayTwo * (*elementSize)))) {
+        if (!_compareFunc(leftArray + (indexOfSubArrayOne * info->elementSize), rightArray + (indexOfSubArrayTwo * info->elementSize))) {
             memcpy(
-                ((char*)(*(void**)_refList) + (indexOfMergedArray * (*elementSize))),
-                leftArray + (indexOfSubArrayOne * (*elementSize)),
-                *elementSize
+                *(char**)_refList + (indexOfMergedArray * info->elementSize),
+                leftArray + (indexOfSubArrayOne * info->elementSize),
+                info->elementSize
             );
             indexOfSubArrayOne++;
         }
         else {
             memcpy(
-                ((char*)(*(void**)_refList) + (indexOfMergedArray * (*elementSize))),
-                rightArray + (indexOfSubArrayTwo * (*elementSize)),
-                *elementSize
+                *(char**)_refList + (indexOfMergedArray * info->elementSize),
+                rightArray + (indexOfSubArrayTwo * info->elementSize),
+                info->elementSize
             );
             indexOfSubArrayTwo++;
         }
@@ -246,9 +212,9 @@ void _Merge(void* _refList, int _left, int _mid, int _right, bool (*_compareFunc
 
     while (indexOfSubArrayOne < subArrayOneSize) {
         memcpy(
-            ((char*)(*(void**)_refList) + (indexOfMergedArray * (*elementSize))),
-            leftArray + (indexOfSubArrayOne * (*elementSize)),
-            *elementSize
+            *(char**)_refList + (indexOfMergedArray * info->elementSize),
+            leftArray + (indexOfSubArrayOne * info->elementSize),
+            info->elementSize
         );
         indexOfSubArrayOne++;
         indexOfMergedArray++;
@@ -256,9 +222,9 @@ void _Merge(void* _refList, int _left, int _mid, int _right, bool (*_compareFunc
 
     while (indexOfSubArrayTwo < subArrayTwoSize) {
         memcpy(
-            ((char*)(*(void**)_refList) + (indexOfMergedArray * (*elementSize))),
-            rightArray + (indexOfSubArrayTwo * (*elementSize)),
-            *elementSize
+            *(char**)_refList + (indexOfMergedArray * info->elementSize),
+            rightArray + (indexOfSubArrayTwo * info->elementSize),
+            info->elementSize
         );
         indexOfSubArrayTwo++;
         indexOfMergedArray++;
