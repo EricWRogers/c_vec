@@ -1,8 +1,12 @@
-#include "vec.h"
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 #include <stdio.h>
 
-int main() {
+#include "vec.h"
+
+int main(int argc, char* argv[]) {
     double* numbers = NULL;
 
     vec_init(&numbers, 5, sizeof(double));
@@ -48,4 +52,6 @@ int main() {
     }
 
     vec_free(&numbers);
+
+    return 0;
 }
