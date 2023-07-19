@@ -63,8 +63,29 @@ void vec_add(void* _refVec, void* _value) {
     info->count++;
 }
 
-unsigned int vec_count(void* _refList) {
-    vec_info* info = *(vec_info**)_refList - 1;
+void vec_remove_at(void* _refVec, unsigned int _index) {
+    vec_info* info = *(vec_info**)_refVec - 1;
+
+    void* current = NULL;
+    void* next = NULL;
+    void* end = NULL;
+
+    end = *(char**)_refVec + ((info->count - 1) * info->elementSize);
+    current = *(char**)_refVec + (_index * info->elementSize);
+
+    while(current < end) {
+        next = (char*)current + info->elementSize;
+
+        memcpy( current, next, info->elementSize);
+
+        current = next;
+    }
+
+    info->count--;
+}
+
+unsigned int vec_count(void* _refVec) {
+    vec_info* info = *(vec_info**)_refVec - 1;
 
     return info->count;
 }
